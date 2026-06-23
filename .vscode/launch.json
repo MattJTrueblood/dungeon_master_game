@@ -9,7 +9,10 @@
         "command": "love"
       },
       "args": ["${workspaceFolder}"],
-      "scriptFiles": ["**/*.lua"]
+      "scriptFiles": ["**/*.lua"],
+      "env": {
+        "LOCAL_LUA_DEBUGGER_VSCODE": "1"
+      }
     }
   ]
 }
