@@ -10,6 +10,11 @@ blockRenderSystem.filter = tiny.requireAll("position", "tiles")
 local entityRenderSystem = tiny.system()
 entityRenderSystem.filter = tiny.requireAll("position", "sprite")
 
+local function drawSprite(sprite, x, y)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(sprite.image, sprite.quad, x, y)
+end
+
 local function drawBlock(block)
     if not block.revealed then return end
     for row = 1, #block.tiles do
@@ -19,8 +24,7 @@ local function drawBlock(block)
             if sprite then
                 local x = block.position.x + (col - 1) * TILE_SIZE
                 local y = block.position.y + (row - 1) * TILE_SIZE
-                love.graphics.setColor(1, 1, 1, 1)
-                love.graphics.draw(sprite, x, y)
+                drawSprite(sprite, x, y)
             end
         end
     end
@@ -29,8 +33,7 @@ end
 local function drawEntity(entity)
     local sprite = sprites.get(entity.sprite)
     if sprite then
-        love.graphics.setColor(1, 1, 1, 1)
-        love.graphics.draw(sprite, entity.position.x, entity.position.y)
+        drawSprite(sprite, entity.position.x, entity.position.y)
     end
     if entity.health then
         local x   = entity.position.x

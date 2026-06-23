@@ -1,23 +1,30 @@
 local sprites = {}
 local registry = {}
 
-local function makeSprite(r, g, b)
-    local canvas = love.graphics.newCanvas(16, 16)
-    love.graphics.setCanvas(canvas)
-    love.graphics.clear(r, g, b, 1)
-    love.graphics.setCanvas()
-    love.graphics.setColor(1, 1, 1, 1)
-    return canvas
-end
+local TILE_SIZE = 16
+
+local spriteOrder = { "wall", "open", "ladder", "spawner", "adventurer", "monster" }
 
 function sprites.load()
-    registry["floor"]      = makeSprite(0.50, 0.50, 0.50)
-    registry["wall"]       = makeSprite(0.25, 0.25, 0.25)
-    registry["ladder"]     = makeSprite(0.60, 0.40, 0.20)
-    registry["door"]       = makeSprite(0.70, 0.60, 0.40)
-    registry["spawner"]    = makeSprite(0.50, 0.10, 0.10)
-    registry["adventurer"] = makeSprite(0.20, 0.40, 0.80)
-    registry["monster"]    = makeSprite(0.80, 0.20, 0.20)
+    local data = love.image.newImageData("sprites.png")
+
+    data:mapPixel(function(x, y, r, g, b, a)
+        if r == 1 and g == 0 and b == 1 then
+            return 0, 0, 0, 0
+        end
+        return r, g, b, a
+    end)
+
+    local image = love.graphics.newImage(data)
+
+    for i, name in ipairs(spriteOrder) do
+        local quad = love.graphics.newQuad(
+            (i - 1) * TILE_SIZE, 0,
+            TILE_SIZE, TILE_SIZE,
+            image:getDimensions()
+        )
+        registry[name] = { image = image, quad = quad }
+    end
 end
 
 function sprites.get(name)

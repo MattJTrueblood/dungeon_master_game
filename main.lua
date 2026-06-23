@@ -18,21 +18,23 @@ function love.load()
     world:addEntity({
         position = { x = 200, y = 200 },
         tiles = {
-            { "floor", "floor", "floor", "floor" },
-            { "floor", "floor", "floor", "floor" },
-            { "floor", "floor", "floor", "floor" },
-            { "wall",  "wall",  "wall",  "wall"  },
+            { "wall",  "wall",  "wall",  "wall", "wall"  },
+            { "wall",  "open",  "open",  "open", "wall"  },
+            { "wall",  "open",  "open",  "open", "wall"  },
+            { "wall",  "open",  "open",  "open", "open"  },
+            { "wall", "wall", "wall", "wall", "wall" },
         },
         revealed = true
     })
 
     world:addEntity({
-        position = { x = 264, y = 200 },
+        position = { x = 280, y = 200 },
         tiles = {
-            { "wall",    "floor",  "floor", "wall"    },
-            { "floor",   "floor",  "ladder","floor"   },
-            { "floor",   "door",   "floor", "floor"   },
-            { "spawner", "floor",  "floor", "spawner" },
+            { "wall",  "wall",  "ladder",  "wall", "wall"  },
+            { "wall",  "open",  "ladder",  "open", "wall"  },
+            { "wall",  "open",  "ladder",  "open", "wall"  },
+            { "open",  "open",  "ladder",  "open", "wall"  },
+            { "wall", "wall", "ladder", "wall", "wall" },
         },
         revealed = true
     })
@@ -49,13 +51,13 @@ function love.load()
     })
 
     world:addEntity({
-        position = { x = 216, y = 216 },
+        position = { x = 232, y = 248 },
         sprite = "adventurer",
         health = { current = 75, max = 100 }
     })
 
     world:addEntity({
-        position = { x = 280, y = 216 },
+        position = { x = 280, y = 248 },
         sprite = "monster",
         health = { current = 40, max = 60 }
     })
@@ -73,5 +75,4 @@ end
 
 function love.draw()
     renderSystem.draw()
-    love.graphics.setColor(1, 1, 1, 1)
 end
