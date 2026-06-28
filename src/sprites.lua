@@ -1,14 +1,15 @@
-local sprites = {}
-local registry = {}
+local sprites     = {}
+local registry    = {}
+local constants   = require("src/constants")
+local TILE_SIZE   = constants.TILE_SIZE
 
-local TILE_SIZE = 16
-
-local spriteOrder = { "wall", "open", "ladder", "spawner", "adventurer", "monster" }
+local sprite_order = { "wall", "open", "ladder", "spawner", "adventurer", "monster" }
 
 function sprites.load()
     local data = love.image.newImageData("sprites.png")
 
     data:mapPixel(function(x, y, r, g, b, a)
+        -- magenta (255, 0, 255) is the transparency key color
         if r == 1 and g == 0 and b == 1 then
             return 0, 0, 0, 0
         end
@@ -17,7 +18,7 @@ function sprites.load()
 
     local image = love.graphics.newImage(data)
 
-    for i, name in ipairs(spriteOrder) do
+    for i, name in ipairs(sprite_order) do
         local quad = love.graphics.newQuad(
             (i - 1) * TILE_SIZE, 0,
             TILE_SIZE, TILE_SIZE,
@@ -25,6 +26,8 @@ function sprites.load()
         )
         registry[name] = { image = image, quad = quad }
     end
+
+    registry["floor"] = registry["wall"]
 end
 
 function sprites.get(name)

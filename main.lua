@@ -5,62 +5,25 @@ end
 local tiny         = require("tiny")
 local version      = require("version")
 local sprites      = require("src/sprites")
-local renderSystem = require("src/systems/render_system")
+local render_system = require("src/systems/render_system")
 local camera       = require("src/camera")
+local generator    = require("src/dungeon/generator")
 
 local world
 
 function love.load()
     sprites.load()
 
-    world = tiny.world(renderSystem.blockRenderSystem, renderSystem.entityRenderSystem)
+    world = tiny.world(render_system.block_render_system, render_system.entity_render_system)
 
-    world:addEntity({
-        position = { x = 200, y = 200 },
-        tiles = {
-            { "wall",  "wall",  "wall",  "wall", "wall"  },
-            { "wall",  "open",  "open",  "open", "wall"  },
-            { "wall",  "open",  "open",  "open", "wall"  },
-            { "wall",  "open",  "open",  "open", "open"  },
-            { "wall", "wall", "wall", "wall", "wall" },
-        },
-        revealed = true
-    })
+    local blocks = generator.generate_layer(0, 0)
+    for _, block in ipairs(blocks) do
+        world:addEntity(block)
+    end
 
-    world:addEntity({
-        position = { x = 280, y = 200 },
-        tiles = {
-            { "wall",  "wall",  "ladder",  "wall", "wall"  },
-            { "wall",  "open",  "ladder",  "open", "wall"  },
-            { "wall",  "open",  "ladder",  "open", "wall"  },
-            { "open",  "open",  "ladder",  "open", "wall"  },
-            { "wall", "wall", "ladder", "wall", "wall" },
-        },
-        revealed = true
-    })
-
-    world:addEntity({
-        position = { x = 328, y = 200 },
-        tiles = {
-            { "floor", "floor", "floor", "floor" },
-            { "floor", "floor", "floor", "floor" },
-            { "floor", "floor", "floor", "floor" },
-            { "floor", "floor", "floor", "floor" },
-        },
-        revealed = false
-    })
-
-    world:addEntity({
-        position = { x = 232, y = 248 },
-        sprite = "adventurer",
-        health = { current = 75, max = 100 }
-    })
-
-    world:addEntity({
-        position = { x = 280, y = 248 },
-        sprite = "monster",
-        health = { current = 40, max = 60 }
-    })
+    local screen_w, screen_h = love.graphics.getDimensions()
+    camera.x = (generator.layer_w_px - screen_w) / 2
+    camera.y = 0
 end
 
 local CAMERA_SPEED = 200
@@ -74,5 +37,7 @@ function love.update(dt)
 end
 
 function love.draw()
-    renderSystem.draw()
+    render_system.draw()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.print("v" .. version.major .. "." .. version.minor .. "." .. version.patch, 10, 10)
 end

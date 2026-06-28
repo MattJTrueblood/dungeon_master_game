@@ -1,39 +1,40 @@
-local tiny    = require("tiny")
-local sprites = require("src/sprites")
-local camera  = require("src/camera")
+local tiny      = require("tiny")
+local sprites   = require("src/sprites")
+local camera    = require("src/camera")
+local constants = require("src/constants")
 
-local TILE_SIZE = 16
+local TILE_SIZE = constants.TILE_SIZE
 
-local blockRenderSystem = tiny.system()
-blockRenderSystem.filter = tiny.requireAll("position", "tiles")
+local block_render_system = tiny.system()
+block_render_system.filter = tiny.requireAll("position", "tiles")
 
-local entityRenderSystem = tiny.system()
-entityRenderSystem.filter = tiny.requireAll("position", "sprite")
+local entity_render_system = tiny.system()
+entity_render_system.filter = tiny.requireAll("position", "sprite")
 
-local function drawSprite(sprite, x, y)
+local function draw_sprite(sprite, x, y)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(sprite.image, sprite.quad, x, y)
 end
 
-local function drawBlock(block)
+local function draw_block(block)
     if not block.revealed then return end
     for row = 1, #block.tiles do
         for col = 1, #block.tiles[row] do
-            local tileType = block.tiles[row][col]
-            local sprite = sprites.get(tileType)
+            local tile_type = block.tiles[row][col]
+            local sprite    = sprites.get(tile_type)
             if sprite then
                 local x = block.position.x + (col - 1) * TILE_SIZE
                 local y = block.position.y + (row - 1) * TILE_SIZE
-                drawSprite(sprite, x, y)
+                draw_sprite(sprite, x, y)
             end
         end
     end
 end
 
-local function drawEntity(entity)
+local function draw_entity(entity)
     local sprite = sprites.get(entity.sprite)
     if sprite then
-        drawSprite(sprite, entity.position.x, entity.position.y)
+        draw_sprite(sprite, entity.position.x, entity.position.y)
     end
     if entity.health then
         local x   = entity.position.x
@@ -46,21 +47,21 @@ local function drawEntity(entity)
     end
 end
 
-local renderSystem = {}
-renderSystem.blockRenderSystem  = blockRenderSystem
-renderSystem.entityRenderSystem = entityRenderSystem
+local render_system = {}
+render_system.block_render_system  = block_render_system
+render_system.entity_render_system = entity_render_system
 
-function renderSystem.draw()
+function render_system.draw()
     love.graphics.clear(0, 0, 0, 1)
     camera:apply()
-    for _, block in ipairs(blockRenderSystem.entities) do
-        drawBlock(block)
+    for _, block in ipairs(block_render_system.entities) do
+        draw_block(block)
     end
-    for _, entity in ipairs(entityRenderSystem.entities) do
-        drawEntity(entity)
+    for _, entity in ipairs(entity_render_system.entities) do
+        draw_entity(entity)
     end
     camera:reset()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-return renderSystem
+return render_system
