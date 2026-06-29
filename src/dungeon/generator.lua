@@ -98,7 +98,20 @@ function generator.generate_layer(world_x, world_y)
     end
 
     connectivity.connect(blocks)
-    return blocks
+
+    -- find the top-row block covering the center column (always exists)
+    local center_x = world_x + (math.ceil(GRID_W / 2) - 1) * UNIT * TILE_SIZE
+    local entrance
+    for _, block in ipairs(blocks) do
+        if block.position.y == world_y
+        and block.position.x <= center_x
+        and block.position.x + #block.tiles[1] * TILE_SIZE > center_x then
+            entrance = block
+            break
+        end
+    end
+
+    return blocks, entrance
 end
 
 generator.layer_w_px = LAYER_W * TILE_SIZE

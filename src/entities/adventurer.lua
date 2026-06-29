@@ -2,10 +2,10 @@ local adventurer = {}
 local constants  = require("src/constants")
 local TILE_SIZE  = constants.TILE_SIZE
 
-function adventurer.new(block)
+function adventurer.new(block, col)
     local h   = #block.tiles
     local w   = #block.tiles[1]
-    local col = math.floor(w / 2)
+    local col = col or math.floor(w / 2)
     return {
         position = {
             x = block.position.x + (col - 1) * TILE_SIZE,
