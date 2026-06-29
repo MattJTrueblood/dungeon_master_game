@@ -2,28 +2,49 @@ if os.getenv("LOCAL_LUA_DEBUGGER_VSCODE") == "1" then
     require("lldebugger").start()
 end
 
-local tiny         = require("tiny")
-local version      = require("version")
-local sprites      = require("src/sprites")
-local render_system = require("src/systems/render_system")
-local camera       = require("src/camera")
-local generator    = require("src/dungeon/generator")
+local tiny            = require("tiny")
+local version         = require("version")
+local sprites         = require("src/sprites")
+local render_system   = require("src/systems/render_system")
+local movement_system = require("src/systems/movement_system")
+local ai_system       = require("src/systems/ai_system")
+local camera          = require("src/camera")
+local generator       = require("src/dungeon/generator")
+local adventurer      = require("src/entities/adventurer")
+local monster         = require("src/entities/monster")
 
 local world
 
 function love.load()
+    print("loading...")
     sprites.load()
 
-    world = tiny.world(render_system.block_render_system, render_system.entity_render_system)
+    world = tiny.world(
+        render_system.block_render_system,
+        render_system.entity_render_system,
+        movement_system.system,
+        ai_system.system
+    )
 
     local blocks = generator.generate_layer(0, 0)
     for _, block in ipairs(blocks) do
         world:addEntity(block)
     end
 
-    local screen_w, screen_h = love.graphics.getDimensions()
+    ai_system.system.blocks = blocks
+
+    for _ = 1, 3 do
+        world:addEntity(adventurer.new(blocks[math.random(#blocks)]))
+    end
+    for _ = 1, 5 do
+        world:addEntity(monster.new(blocks[math.random(#blocks)]))
+    end
+
+    local screen_w = love.graphics.getDimensions()
     camera.x = (generator.layer_w_px - screen_w) / 2
     camera.y = 0
+
+    print("loading complete!")
 end
 
 local CAMERA_SPEED = 200

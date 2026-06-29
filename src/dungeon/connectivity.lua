@@ -87,6 +87,21 @@ local function punch_horizontal(left, right)
     left.tiles[h_left][tile_w(left)]       = "floor"
     right.tiles[h_right - 1][1]            = "open"
     right.tiles[h_right][1]                = "floor"
+
+    left.connections[#left.connections + 1] = {
+        from_block = left,
+        from_tile  = { h_left - 1, tile_w(left) },
+        to_block   = right,
+        to_tile    = { h_right - 1, 1 },
+        kind       = "horizontal",
+    }
+    right.connections[#right.connections + 1] = {
+        from_block = right,
+        from_tile  = { h_right - 1, 1 },
+        to_block   = left,
+        to_tile    = { h_left - 1, tile_w(left) },
+        kind       = "horizontal",
+    }
 end
 
 local function punch_vertical(above, below)
@@ -107,9 +122,29 @@ local function punch_vertical(above, below)
     for row = 1, tile_h(below) - 1 do
         below.tiles[row][col_below] = "ladder"
     end
+
+    -- use the open row above floor (tile_h - 1) so entities stand on top of ground
+    above.connections[#above.connections + 1] = {
+        from_block = above,
+        from_tile  = { tile_h(above) - 1, col_above },
+        to_block   = below,
+        to_tile    = { tile_h(below) - 1, col_below },
+        kind       = "vertical",
+    }
+    below.connections[#below.connections + 1] = {
+        from_block = below,
+        from_tile  = { tile_h(below) - 1, col_below },
+        to_block   = above,
+        to_tile    = { tile_h(above) - 1, col_above },
+        kind       = "vertical",
+    }
 end
 
 function connectivity.connect(blocks)
+    for _, block in ipairs(blocks) do
+        block.connections = {}
+    end
+
     local all_edges              = build_edges(blocks)
     local tree_edges, tree_set   = run_prims(blocks, all_edges)
 

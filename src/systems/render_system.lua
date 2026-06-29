@@ -3,7 +3,9 @@ local sprites   = require("src/sprites")
 local camera    = require("src/camera")
 local constants = require("src/constants")
 
-local TILE_SIZE = constants.TILE_SIZE
+local TILE_SIZE    = constants.TILE_SIZE
+local DEBUG_ROUTES = constants.DEBUG_ROUTES
+local nav_graph    = DEBUG_ROUTES and require("src/navigation/nav_graph") or nil
 
 local block_render_system = tiny.system()
 block_render_system.filter = tiny.requireAll("position", "tiles")
@@ -28,6 +30,53 @@ local function draw_block(block)
                 draw_sprite(sprite, x, y)
             end
         end
+    end
+end
+
+-- LINE DRAWING FOR ROUTE DEBUGGING --
+
+local ROUTE_COLORS = {
+    { 1, 1, 0 }, { 0, 1, 1 }, { 1, 0, 1 }, { 1, 0.5, 0 },
+    { 0, 1, 0 }, { 0, 0.5, 1 }, { 1, 0, 0.5 }, { 0.5, 1, 0 },
+}
+local entity_colors = {}
+local color_index   = 0
+
+local function get_entity_color(entity)
+    if not entity_colors[entity] then
+        color_index = (color_index % #ROUTE_COLORS) + 1
+        entity_colors[entity] = ROUTE_COLORS[color_index]
+    end
+    return entity_colors[entity]
+end
+
+local function draw_route(entity)
+    local nav = entity.nav
+    if not nav or not nav.waypoint then return end
+
+    local half = TILE_SIZE / 2
+    local points = { entity.position.x + half, entity.position.y + half }
+
+    if nav.crossing then
+        points[#points + 1] = nav.waypoint.x + half
+        points[#points + 1] = nav.waypoint.y + half
+    end
+
+    local start = nav.crossing and 2 or 1
+    for i = start, #nav.route do
+        local conn = nav.route[i]
+        local p = nav_graph.tile_world_pos(conn.from_block, conn.from_tile[1], conn.from_tile[2])
+        points[#points + 1] = p.x + half
+        points[#points + 1] = p.y + half
+        local q = nav_graph.tile_world_pos(conn.to_block, conn.to_tile[1], conn.to_tile[2])
+        points[#points + 1] = q.x + half
+        points[#points + 1] = q.y + half
+    end
+
+    if #points >= 4 then
+        local c = get_entity_color(entity)
+        love.graphics.setColor(c[1], c[2], c[3], 0.7)
+        love.graphics.line(points)
     end
 end
 
@@ -59,6 +108,7 @@ function render_system.draw()
     end
     for _, entity in ipairs(entity_render_system.entities) do
         draw_entity(entity)
+        if DEBUG_ROUTES then draw_route(entity) end
     end
     camera:reset()
     love.graphics.setColor(1, 1, 1, 1)
