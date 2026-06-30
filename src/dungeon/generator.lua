@@ -4,7 +4,7 @@ local connectivity   = require("src/dungeon/connectivity")
 
 local TILE_SIZE = constants.TILE_SIZE
 local LAYER_W   = 75
-local LAYER_H   = 50
+local LAYER_H   = 40
 local UNIT      = 5
 local GRID_W    = LAYER_W / UNIT  -- 15 cells
 local GRID_H    = LAYER_H / UNIT  -- 10 cells

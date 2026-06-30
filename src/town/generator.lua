@@ -3,7 +3,7 @@ local constants = require("src/constants")
 local TILE_SIZE = constants.TILE_SIZE
 
 local TOWN_W     = 75
-local TOWN_H     = 10
+local TOWN_H     = 30
 local CENTER_COL = math.ceil(TOWN_W / 2)  -- 38
 
 local function make_town_tiles()

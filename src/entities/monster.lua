@@ -11,7 +11,7 @@ function monster.new(block)
             x = block.position.x + (col - 1) * TILE_SIZE,
             y = block.position.y + (h - 2)   * TILE_SIZE,
         },
-        sprite = "monster",
+        sprite = "monster_easy",
         health = { current = 40, max = 40 },
         nav = {
             current_block = block,

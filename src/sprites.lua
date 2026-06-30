@@ -10,11 +10,14 @@ local sprite_defs = {
     { name = "ladder",    x = 2*T, y = 0*T, w = T,   h = T   },
     { name = "spawner",   x = 3*T, y = 0*T, w = T,   h = T   },
     { name = "adventurer",x = 4*T, y = 0*T, w = T,   h = T   },
-    { name = "monster",   x = 5*T, y = 0*T, w = T,   h = T   },
-    { name = "sky",       x = 0*T, y = 1*T, w = T,   h = T   },
-    { name = "grass",     x = 1*T, y = 1*T, w = T,   h = T   },
-    { name = "house1",    x = 2*T, y = 1*T, w = 2*T, h = 2*T },
-    { name = "house2",    x = 4*T, y = 1*T, w = 2*T, h = 2*T },
+    { name = "monster_easy", x = 5*T, y = 0*T, w = T,   h = T   },
+    { name = "monster_medium", x = 6*T, y = 0*T, w = T,   h = T   },
+    { name = "monster_hard",  x = 7*T, y = 0*T, w = T,   h = T   },
+    { name = "sky",            x = 0*T, y = 1*T, w = T,   h = T   },
+    { name = "grass",          x = 1*T, y = 1*T, w = T,   h = T   },
+    { name = "house1",         x = 2*T, y = 1*T, w = 2*T, h = 2*T },
+    { name = "house2",         x = 4*T, y = 1*T, w = 2*T, h = 2*T },
+    { name = "monster_boss",   x = 6*T, y = 1*T, w = 2*T, h = 2*T },
 }
 
 function sprites.load()

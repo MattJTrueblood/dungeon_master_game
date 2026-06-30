@@ -13,6 +13,10 @@ block_render_system.filter = tiny.requireAll("position", "tiles")
 local entity_render_system = tiny.system()
 entity_render_system.filter = tiny.requireAll("position", "sprite")
 
+local world_canvas = nil
+local canvas_ox    = 0
+local canvas_oy    = 0
+
 local function draw_sprite(sprite, x, y)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(sprite.image, sprite.quad, x, y)
@@ -100,9 +104,22 @@ local render_system = {}
 render_system.block_render_system  = block_render_system
 render_system.entity_render_system = entity_render_system
 
+function render_system.init(bounds)
+    local B  = 3 * TILE_SIZE
+    local bw = math.ceil(bounds.x2 - bounds.x1) + 2 * B
+    local bh = math.ceil(bounds.y2 - bounds.y1) + 2 * B
+    world_canvas = love.graphics.newCanvas(bw, bh)
+    canvas_ox = B - bounds.x1
+    canvas_oy = B - bounds.y1
+end
+
 function render_system.draw()
+    if not world_canvas then return end
+
+    love.graphics.setCanvas(world_canvas)
     love.graphics.clear(0, 0, 0, 1)
-    camera:apply()
+    love.graphics.push()
+    love.graphics.translate(canvas_ox, canvas_oy)
     for _, block in ipairs(block_render_system.entities) do
         draw_block(block)
     end
@@ -110,8 +127,13 @@ function render_system.draw()
         draw_entity(entity)
         if DEBUG_ROUTES then draw_route(entity) end
     end
-    camera:reset()
+    love.graphics.pop()
+    love.graphics.setCanvas()
+
+    love.graphics.clear(0, 0, 0, 1)
     love.graphics.setColor(1, 1, 1, 1)
+    local z  = camera.zoom
+    love.graphics.draw(world_canvas, -(camera.x + canvas_ox) * z, -(camera.y + canvas_oy) * z, 0, z, z)
 end
 
 return render_system

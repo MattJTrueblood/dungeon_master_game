@@ -18,6 +18,7 @@ local world
 
 function love.load()
     print("loading...")
+    love.graphics.setDefaultFilter("nearest", "nearest")
     sprites.load()
 
     world = tiny.world(
@@ -49,20 +50,43 @@ function love.load()
         world:addEntity(monster.new(blocks[math.random(#blocks)]))
     end
 
-    local screen_w = love.graphics.getDimensions()
-    camera.x = (generator.layer_w_px - screen_w) / 2
+    camera.bounds = {
+        x1 = 0,
+        y1 = town_gen.town_y,
+        x2 = generator.layer_w_px,
+        y2 = generator.layer_h_px,
+    }
+
+    camera.x = 0
     camera.y = town_gen.town_y
+    camera:clamp()
+
+    render_system.init(camera.bounds)
 
     print("loading complete!")
 end
 
-local CAMERA_SPEED = 200
+function love.mousepressed(x, y, button)
+    if button == 1 then camera:start_drag() end
+end
+
+function love.mousereleased(x, y, button)
+    if button == 1 then camera:end_drag() end
+end
+
+function love.wheelmoved(x, y)
+    local mx, my = love.mouse.getPosition()
+    camera:scroll(y, mx, my)
+end
+
+function love.mousemoved(x, y, dx, dy)
+    if camera.dragging then
+        camera:move_drag(dx, dy)
+    end
+end
 
 function love.update(dt)
-    if love.keyboard.isDown("left")  then camera.x = camera.x - CAMERA_SPEED * dt end
-    if love.keyboard.isDown("right") then camera.x = camera.x + CAMERA_SPEED * dt end
-    if love.keyboard.isDown("up")    then camera.y = camera.y - CAMERA_SPEED * dt end
-    if love.keyboard.isDown("down")  then camera.y = camera.y + CAMERA_SPEED * dt end
+    camera:update(dt)
     world:update(dt)
 end
 
