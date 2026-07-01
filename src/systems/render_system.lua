@@ -18,13 +18,30 @@ local world_canvas = nil
 local canvas_ox    = 0
 local canvas_oy    = 0
 
-local FLOOR_TINTS = {
-    { 1.0,  1.0,  1.0  },
-    { 0.75, 0.85, 1.0  },
-    { 0.85, 0.7,  1.0  },
-    { 1.0,  0.65, 0.65 },
-    { 0.6,  0.4,  0.9  },
-}
+local tint_cache = {}
+
+local function floor_tint(floor)
+    if tint_cache[floor] then return tint_cache[floor] end
+    -- rotate hue by golden angle per floor, keep saturation and value fixed
+    local h = ((floor - 1) * 137.508) % 360  -- golden angle in degrees
+    local s = 0.35
+    local v = 0.95
+    -- HSV to RGB
+    local c  = v * s
+    local x  = c * (1 - math.abs((h / 60) % 2 - 1))
+    local m  = v - c
+    local r, g, b
+    if     h < 60  then r,g,b = c,x,0
+    elseif h < 120 then r,g,b = x,c,0
+    elseif h < 180 then r,g,b = 0,c,x
+    elseif h < 240 then r,g,b = 0,x,c
+    elseif h < 300 then r,g,b = x,0,c
+    else                r,g,b = c,0,x
+    end
+    local t = { r + m, g + m, b + m }
+    tint_cache[floor] = t
+    return t
+end
 
 local function draw_sprite(sprite, x, y)
     love.graphics.draw(sprite.image, sprite.quad, x, y)
@@ -32,7 +49,7 @@ end
 
 local function draw_block(block)
     if not REVEAL_ALL and not block.revealed then return end
-    local tint    = FLOOR_TINTS[block.floor] or FLOOR_TINTS[1]
+    local tint    = block.floor and floor_tint(block.floor) or { 1, 1, 1 }
     local overlay = { ladder = true, spawner = true, boss_spawner = true, chest = true }
 
     love.graphics.setColor(tint[1], tint[2], tint[3], 1)
@@ -135,32 +152,56 @@ render_system.block_render_system  = block_render_system
 render_system.entity_render_system = entity_render_system
 
 function render_system.init(bounds)
-    local B  = 3 * TILE_SIZE
-    local bw = math.ceil(bounds.x2 - bounds.x1) + 2 * B
-    local bh = math.ceil(bounds.y2 - bounds.y1) + 2 * B
-    world_canvas = love.graphics.newCanvas(bw, bh)
-    canvas_ox = B - bounds.x1
-    canvas_oy = B - bounds.y1
+    world_canvas = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight())
+    canvas_ox = -bounds.x1
+    canvas_oy = -bounds.y1
 end
 
 function render_system.draw()
     if not world_canvas then return end
 
+    local z = camera.zoom
+
+    local sw, sh = love.graphics.getWidth(), love.graphics.getHeight()
+    local view_x1 = camera.x
+    local view_y1 = camera.y
+    local view_x2 = camera.x + sw / z
+    local view_y2 = camera.y + sh / z
+
+    local function block_visible(block)
+        local bw = #block.tiles[1] * TILE_SIZE
+        local bh = #block.tiles    * TILE_SIZE
+        local bx = block.position.x
+        local by = block.position.y
+        return bx < view_x2 and bx + bw > view_x1
+           and by < view_y2 and by + bh > view_y1
+    end
+
+    local function entity_visible(entity)
+        local x = entity.position.x
+        local y = entity.position.y
+        return x < view_x2 and x + TILE_SIZE * 2 > view_x1
+           and y < view_y2 and y + TILE_SIZE * 2 > view_y1
+    end
+
     love.graphics.setCanvas(world_canvas)
     love.graphics.clear(0, 0, 0, 1)
     love.graphics.push()
-    love.graphics.translate(canvas_ox, canvas_oy)
+    love.graphics.scale(z, z)
+    love.graphics.translate(-camera.x, -camera.y)
     for _, block in ipairs(block_render_system.entities) do
-        draw_block(block)
+        if block_visible(block) then draw_block(block) end
     end
     for _, entity in ipairs(entity_render_system.entities) do
-        draw_entity(entity)
-        if DEBUG_ROUTES then draw_route(entity) end
+        if entity_visible(entity) then
+            draw_entity(entity)
+            if DEBUG_ROUTES then draw_route(entity) end
+        end
     end
     if not REVEAL_ALL then
         love.graphics.setColor(0, 0, 0, 1)
         for _, block in ipairs(block_render_system.entities) do
-            if not block.revealed then
+            if block_visible(block) and not block.revealed then
                 local w = #block.tiles[1] * TILE_SIZE
                 local h = #block.tiles    * TILE_SIZE
                 love.graphics.rectangle("fill", block.position.x, block.position.y, w, h)
@@ -172,8 +213,7 @@ function render_system.draw()
 
     love.graphics.clear(0, 0, 0, 1)
     love.graphics.setColor(1, 1, 1, 1)
-    local z  = camera.zoom
-    love.graphics.draw(world_canvas, -(camera.x + canvas_ox) * z, -(camera.y + canvas_oy) * z, 0, z, z)
+    love.graphics.draw(world_canvas, 0, 0)
 end
 
 return render_system

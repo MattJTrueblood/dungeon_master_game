@@ -108,9 +108,9 @@ local function initiate_combat(a, b)
         if a.position.x > b.position.x then pa, pb = pb, pa end
     end
 
-    -- bump_dir: toward opponent. left entity bumps right (+1), right entity bumps left (-1)
-    local a_center = a.position.x + (a.is_boss and TILE_SIZE or TILE_SIZE / 2)
-    local b_center = b.position.x + (b.is_boss and TILE_SIZE or TILE_SIZE / 2)
+    -- bump_dir: toward opponent, based on final combat positions (not spawn positions)
+    local a_center = pa.x + (a.is_boss and TILE_SIZE or TILE_SIZE / 2)
+    local b_center = pb.x + (b.is_boss and TILE_SIZE or TILE_SIZE / 2)
     local a_dir = a_center < b_center and 1 or -1
     local b_dir = -a_dir
 
@@ -195,8 +195,9 @@ function system:update(dt)
             local c      = e.combat
             local target = c.target
 
-            -- orphan check: target died or was removed (also catches queued-this-frame removal)
-            if not self.entity_set[target] or to_remove[target] then
+            -- orphan check: target removed, queued this frame, or dead but not yet flushed
+            if not self.entity_set[target] or to_remove[target]
+            or (target.health and target.health.current <= 0) then
                 e.combat        = nil
                 e.combat_bump   = nil
                 e.ai.state      = "idle"
@@ -220,7 +221,7 @@ function system:update(dt)
             elseif state == "combat" then
                 -- attack timer
                 c.attack_timer = c.attack_timer - dt
-                if c.attack_timer <= 0 then
+                if c.attack_timer <= 0 and not c.kill_pending then
                     c.attack_timer = ATTACK_INTERVAL
                     target.health.current = target.health.current - e.attack_power
                     -- trigger bump on this attacker

@@ -50,18 +50,30 @@ function town_gen.generate(dungeon_entrance)
         kind       = "vertical",
     }
 
-    local house_y      = town_y + (TOWN_H - 3) * TILE_SIZE
+    -- guild hall placed first so houses avoid it
+    local GUILD_W = 3
+    local gh_col
+    for _ = 1, 50 do
+        local candidate = math.random(4, TOWN_W - GUILD_W - 3)
+        if math.abs(candidate - CENTER_COL) > GUILD_W + 2 then
+            gh_col = candidate
+            break
+        end
+    end
+    gh_col = gh_col or (CENTER_COL > TOWN_W / 2 and 4 or TOWN_W - GUILD_W - 3)
+
+    local house_y       = town_y + (TOWN_H - 3) * TILE_SIZE
     local house_sprites = { "house1", "house2" }
-    local HOUSE_W      = 2  -- tiles
-    local CLUSTER_MIN  = 15
-    local CLUSTER_MAX  = TOWN_W - HOUSE_W - 5
+    local HOUSE_W       = 2
+    local CLUSTER_MIN   = 3
+    local CLUSTER_MAX   = TOWN_W - HOUSE_W - 2
 
     local placed = {}
     local house_entities = {}
 
     local function overlaps(col)
-        -- avoid the ladder and a 1-tile gap either side
         if col + HOUSE_W > CENTER_COL - 1 and col < CENTER_COL + 2 then return true end
+        if col + HOUSE_W > gh_col - 1 and col < gh_col + GUILD_W + 1 then return true end
         for _, c in ipairs(placed) do
             if col < c + HOUSE_W and col + HOUSE_W > c then return true end
         end
@@ -69,7 +81,7 @@ function town_gen.generate(dungeon_entrance)
     end
 
     for _ = 1, 8 do
-        for _ = 1, 20 do
+        for _ = 1, 30 do
             local col = math.random(CLUSTER_MIN, CLUSTER_MAX)
             if not overlaps(col) then
                 placed[#placed + 1] = col
@@ -82,9 +94,8 @@ function town_gen.generate(dungeon_entrance)
         end
     end
 
-    local guild_hall_col = TOWN_W - 5  -- near right edge, 3 tiles wide
     local guild_hall = {
-        position = { x = (guild_hall_col - 1) * TILE_SIZE, y = town_y + (TOWN_H - 4) * TILE_SIZE },
+        position = { x = (gh_col - 1) * TILE_SIZE, y = town_y + (TOWN_H - 4) * TILE_SIZE },
         sprite   = "guild_hall",
     }
 

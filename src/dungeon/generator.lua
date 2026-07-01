@@ -152,22 +152,29 @@ function generator.place_spawners(floors)
             end
         end
 
-        if floor == 5 then
-            local big = {}
-            for _, b in ipairs(blocks) do
-                if #b.tiles[1] >= 3 * UNIT then big[#big + 1] = b end
-            end
-            if #big > 0 then
-                local b  = big[math.random(#big)]
+        -- boss spawners: 1 starting floor 10, +1 more every 2 floors after that
+        local boss_count = floor >= 10 and math.ceil((floor - 9) / 2) or 0
+        local big = {}
+        for _, b in ipairs(blocks) do
+            if #b.tiles[1] >= 3 * UNIT then big[#big + 1] = b end
+        end
+        for i = #big, 2, -1 do
+            local j = math.random(i)
+            big[i], big[j] = big[j], big[i]
+        end
+        local placed_boss = 0
+        for _, b in ipairs(big) do
+            if placed_boss >= boss_count then break end
+            if not b.has_boss_spawner then
                 local h  = #b.tiles
                 local w  = #b.tiles[1]
                 local r  = h - 2
                 local candidates = {}
                 for c = 3, w - 3 do
-                    if b.tiles[r][c]       ~= "ladder"
-                    and b.tiles[r][c+1]    ~= "ladder"
-                    and b.tiles[r+1][c]    ~= "ladder"
-                    and b.tiles[r+1][c+1]  ~= "ladder" then
+                    if b.tiles[r][c]      ~= "ladder"
+                    and b.tiles[r][c+1]   ~= "ladder"
+                    and b.tiles[r+1][c]   ~= "ladder"
+                    and b.tiles[r+1][c+1] ~= "ladder" then
                         candidates[#candidates + 1] = c
                     end
                 end
@@ -176,6 +183,7 @@ function generator.place_spawners(floors)
                     b.tiles[r][c]      = "boss_spawner"
                     b.has_boss_spawner = true
                     b.boss_spawner_col = c
+                    placed_boss        = placed_boss + 1
                 end
             end
         end

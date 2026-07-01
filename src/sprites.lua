@@ -14,6 +14,7 @@ local sprite_defs = {
     { name = "adventurer_1", x = 4*T, y = 0*T, w = T, h = T },
     { name = "adventurer_2", x = 0*T, y = 2*T, w = T, h = T },
     { name = "adventurer_3", x = 1*T, y = 2*T, w = T, h = T },
+    { name = "adventurer_4", x = 8*T, y = 0*T, w = T, h = T },
     { name = "monster_easy", x = 5*T, y = 0*T, w = T,   h = T   },
     { name = "monster_medium", x = 6*T, y = 0*T, w = T,   h = T   },
     { name = "monster_hard",  x = 7*T, y = 0*T, w = T,   h = T   },

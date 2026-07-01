@@ -2,10 +2,10 @@ local tiny      = require("tiny")
 local nav_graph = require("src/navigation/nav_graph")
 
 local system = tiny.processingSystem()
-system.filter          = tiny.requireAll("nav", "ai")
-system.blocks          = nil  -- set from main.lua
-system.blocks_by_floor = nil  -- set from main.lua
-system.blocks_by_tier  = nil  -- set from main.lua: {[1]=floor1 only, [2]=floors1-2, [3]=floors3+}
+system.filter             = tiny.requireAll("nav", "ai")
+system.all_blocks         = nil  -- shared mutable table set from main.lua
+system.floor_restrictions = nil  -- {[tier] = {min, max}} set from main.lua
+system.deepest_generated  = 1   -- updated by main.lua as floors are stepped into
 
 function system:process(entity, dt)
     local ai  = entity.ai
@@ -28,15 +28,28 @@ function system:process(entity, dt)
         return
     end
 
+    local all = self.all_blocks or {}
+
     local candidates
-    if entity.tier and self.blocks_by_tier then
-        candidates = self.blocks_by_tier[entity.tier]
+    if entity.tier and self.floor_restrictions then
+        local rest = self.floor_restrictions[entity.tier]
+        if rest then
+            local max_floor = math.min(rest.max or 999, self.deepest_generated)
+            candidates = {}
+            for _, b in ipairs(all) do
+                if b.floor and b.floor >= rest.min and b.floor <= max_floor then
+                    candidates[#candidates + 1] = b
+                end
+            end
+        end
     elseif nav.floor then
-        candidates = self.blocks_by_floor[nav.floor]
-    else
-        candidates = self.blocks
+        candidates = {}
+        for _, b in ipairs(all) do
+            if b.floor == nav.floor then candidates[#candidates + 1] = b end
+        end
     end
-    if not candidates or #candidates == 0 then return end
+    if not candidates or #candidates == 0 then candidates = all end
+    if #candidates == 0 then return end
 
     local unexplored = {}
     for _, b in ipairs(candidates) do

@@ -6,7 +6,7 @@ local STATS = {
     easy   = { sprite = "monster_easy",   health = 40,  speed = 175, attack_power = 5,  kill_gold = 1,  kill_xp = 1  },
     medium = { sprite = "monster_medium", health = 80,  speed = 200, attack_power = 10, kill_gold = 3,  kill_xp = 3  },
     hard   = { sprite = "monster_hard",   health = 150, speed = 225, attack_power = 20, kill_gold = 5,  kill_xp = 5  },
-    boss   = { sprite = "monster_boss",   health = 500, speed = 80,  attack_power = 50, kill_gold = 20, kill_xp = 20 },
+    boss   = { sprite = "monster_boss",   health = 500, speed = 80,  attack_power = 50, kill_gold = 20, kill_xp = 100 },
 }
 
 function monster.new(block, difficulty, col)

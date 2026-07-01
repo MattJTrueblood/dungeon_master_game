@@ -5,7 +5,8 @@ local TILE_SIZE  = constants.TILE_SIZE
 local STATS = {
     [1] = { health = 60,  attack_power = 10, speed = 250, xp_to_rank_up = 20 },
     [2] = { health = 120, attack_power = 22, speed = 270, xp_to_rank_up = 50 },
-    [3] = { health = 220, attack_power = 40, speed = 290, xp_to_rank_up = nil },
+    [3] = { health = 320, attack_power = 55, speed = 290, xp_to_rank_up = 100 },
+    [4] = { health = 500, attack_power = 80, speed = 310, xp_to_rank_up = nil },
 }
 
 adventurer.STATS = STATS

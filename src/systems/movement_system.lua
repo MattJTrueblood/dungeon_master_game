@@ -21,7 +21,10 @@ local function set_next_waypoint(entity)
 end
 
 local system = tiny.processingSystem()
-system.filter = tiny.requireAll("position", "nav")
+system.filter          = tiny.requireAll("position", "nav")
+system.on_enter_floor     = nil   -- set from main.lua
+system.floor_restrictions = nil   -- shared with ai_system, set from main.lua
+system.deepest_generated  = 1     -- updated from main.lua
 
 function system:process(entity, dt)
     local nav = entity.nav
@@ -48,7 +51,21 @@ function system:process(entity, dt)
             nav.current_block = conn.to_block
             nav.waypoint      = to_pos
             nav.crossing      = conn
-            if entity.reveals_fog then conn.to_block.revealed = true end
+            local dest_floor = conn.to_block.floor
+            local allowed = true
+            if entity.tier and system.floor_restrictions then
+                local rest = system.floor_restrictions[entity.tier]
+                if rest and dest_floor then
+                    local max_f = math.min(rest.max or 999, system.deepest_generated or 999)
+                    allowed = dest_floor >= rest.min and dest_floor <= max_f
+                end
+            end
+            if entity.reveals_fog and allowed then
+                conn.to_block.revealed = true
+                if system.on_enter_floor then
+                    system.on_enter_floor(dest_floor)
+                end
+            end
 
         else
             go_idle(entity)
