@@ -12,3 +12,7 @@ An idle game / 2D fantasy dungeon ant farm-style simulator about running an adve
 - **Package manager:** LuaRocks (implied by `.gitignore`)
 
 Build commands, test runner, and lint tooling are not yet configured — update this file as they are added.
+
+## Important
+
+Never state something as fact without verifying it. If unsure, check first. Do not confidently assert things — about files, code, behavior, or anything else — that you haven't actually confirmed.

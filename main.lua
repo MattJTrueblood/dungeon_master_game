@@ -9,6 +9,7 @@ local render_system   = require("src/systems/render_system")
 local movement_system = require("src/systems/movement_system")
 local ai_system       = require("src/systems/ai_system")
 local spawner_system  = require("src/systems/spawner_system")
+local combat_system   = require("src/systems/combat_system")
 local camera          = require("src/camera")
 local generator       = require("src/dungeon/generator")
 local connectivity    = require("src/dungeon/connectivity")
@@ -16,6 +17,7 @@ local town_gen        = require("src/town/generator")
 local adventurer      = require("src/entities/adventurer")
 
 local world
+local spawn_town_block
 
 function love.load()
     print("loading...")
@@ -29,7 +31,8 @@ function love.load()
         ai_system.system,
         spawner_system.monster_system,
         spawner_system.spawner_system,
-        spawner_system.boss_spawner_system
+        spawner_system.boss_spawner_system,
+        combat_system.system
     )
 
     math.randomseed(os.time())
@@ -72,6 +75,8 @@ function love.load()
         world:addEntity(adventurer.new(town_block, math.random(2, town_w - 1)))
     end
 
+    spawn_town_block = town_block
+
     camera:set_bounds({
         x1 = 0,
         y1 = town_gen.town_y,
@@ -85,6 +90,14 @@ function love.load()
     render_system.init(camera.bounds)
 
     print("loading complete!")
+end
+
+function love.keypressed(key)
+    if key == "a" then
+        local b  = spawn_town_block
+        local tw = #b.tiles[1]
+        world:addEntity(adventurer.new(b, math.random(2, tw - 1)))
+    end
 end
 
 function love.mousepressed(x, y, button)

@@ -115,7 +115,8 @@ local function draw_entity(entity)
     love.graphics.setColor(1, 1, 1, 1)
     local sprite = sprites.get(entity.sprite)
     if sprite then
-        draw_sprite(sprite, entity.position.x, entity.position.y)
+        local draw_x = entity.position.x + (entity.combat_bump or 0)
+        draw_sprite(sprite, draw_x, entity.position.y)
     end
     if entity.health then
         local x   = entity.position.x
