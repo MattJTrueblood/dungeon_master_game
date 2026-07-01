@@ -3,10 +3,12 @@ local constants  = require("src/constants")
 local TILE_SIZE  = constants.TILE_SIZE
 
 local STATS = {
-    [1] = { health = 60,  attack_power = 10, speed = 250 },
-    [2] = { health = 120, attack_power = 22, speed = 270 },
-    [3] = { health = 220, attack_power = 40, speed = 290 },
+    [1] = { health = 60,  attack_power = 10, speed = 250, xp_to_rank_up = 20 },
+    [2] = { health = 120, attack_power = 22, speed = 270, xp_to_rank_up = 50 },
+    [3] = { health = 220, attack_power = 40, speed = 290, xp_to_rank_up = nil },
 }
+
+adventurer.STATS = STATS
 
 function adventurer.new(block, col, tier)
     local h   = #block.tiles
@@ -34,6 +36,9 @@ function adventurer.new(block, col, tier)
         },
         faction      = "adventurer",
         attack_power = stat.attack_power,
+        gold         = 0,
+        xp           = 0,
+        retreating   = false,
         reveals_fog  = true,
     }
 end

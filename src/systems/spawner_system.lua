@@ -1,13 +1,14 @@
 local tiny    = require("tiny")
 local monster = require("src/entities/monster")
 
-local SPAWN_INTERVAL = { 10, 10, 10, 10 }
-local MAX_POP        = { 20, 20, 20, 20 }
+local SPAWN_INTERVAL = { 10, 10, 10, 10, 10 }
+local MAX_POP        = { 20, 15, 10, 10, 10 }
 local DIFFICULTIES   = {
     { "easy" },
     { "easy", "medium" },
+    { "medium"},
     { "medium", "hard" },
-    { "hard" },
+    { "hard"}
 }
 
 local monster_system = tiny.system()
@@ -35,7 +36,7 @@ function spawner_system:update(dt)
             if block.spawn_timer <= 0 then
                 local diffs = DIFFICULTIES[f] or { "easy" }
                 local diff  = diffs[math.random(#diffs)]
-                self.world:addEntity(monster.new(block, diff))
+                self.world:addEntity(monster.new(block, diff, block.spawner_col))
                 counts[f]         = pop + 1
                 block.spawn_timer = SPAWN_INTERVAL[f] or 10
             end
@@ -62,7 +63,7 @@ function boss_spawner_system:update(dt)
         if boss_count == 0 then
             block.boss_spawn_timer = block.boss_spawn_timer - dt
             if block.boss_spawn_timer <= 0 then
-                self.world:addEntity(monster.new(block, "boss"))
+                self.world:addEntity(monster.new(block, "boss", block.boss_spawner_col))
                 boss_count             = boss_count + 1
                 block.boss_spawn_timer = BOSS_SPAWN_INTERVAL
             end

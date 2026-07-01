@@ -147,11 +147,12 @@ function generator.place_spawners(floors)
             if b.tiles[h - 1][col] ~= "ladder" then
                 b.tiles[h - 1][col] = "spawner"
                 b.has_spawner        = true
+                b.spawner_col        = col
                 placed               = placed + 1
             end
         end
 
-        if floor == 4 then
+        if floor == 5 then
             local big = {}
             for _, b in ipairs(blocks) do
                 if #b.tiles[1] >= 3 * UNIT then big[#big + 1] = b end
@@ -174,6 +175,28 @@ function generator.place_spawners(floors)
                     local c = candidates[math.random(#candidates)]
                     b.tiles[r][c]      = "boss_spawner"
                     b.has_boss_spawner = true
+                    b.boss_spawner_col = c
+                end
+            end
+        end
+    end
+end
+
+function generator.place_chests(floors)
+    for _, floor_data in ipairs(floors) do
+        for _, block in ipairs(floor_data.blocks) do
+            if math.random() < 0.07 then
+                local h          = #block.tiles
+                local w          = #block.tiles[1]
+                local stand_row  = h - 1
+                local candidates = {}
+                for col = 2, w - 1 do
+                    if block.tiles[stand_row][col] == "open" then
+                        candidates[#candidates + 1] = col
+                    end
+                end
+                if #candidates > 0 then
+                    block.tiles[stand_row][candidates[math.random(#candidates)]] = "chest"
                 end
             end
         end

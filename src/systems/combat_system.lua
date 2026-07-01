@@ -195,8 +195,8 @@ function system:update(dt)
             local c      = e.combat
             local target = c.target
 
-            -- orphan check: target died or was removed
-            if not self.entity_set[target] then
+            -- orphan check: target died or was removed (also catches queued-this-frame removal)
+            if not self.entity_set[target] or to_remove[target] then
                 e.combat        = nil
                 e.combat_bump   = nil
                 e.ai.state      = "idle"
@@ -229,6 +229,10 @@ function system:update(dt)
                     if target.health.current <= 0 then
                         to_remove[target] = true
                         c.kill_pending = true
+                        if target.kill_gold and e.gold then
+                            e.gold = e.gold + target.kill_gold
+                            e.xp   = e.xp   + target.kill_xp
+                        end
                     end
                 end
 

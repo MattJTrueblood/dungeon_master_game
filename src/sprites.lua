@@ -9,6 +9,8 @@ local sprite_defs = {
     { name = "open",      x = 1*T, y = 0*T, w = T,   h = T   },
     { name = "ladder",    x = 2*T, y = 0*T, w = T,   h = T   },
     { name = "spawner",   x = 3*T, y = 0*T, w = T,   h = T   },
+    { name = "chest",        x = 9*T, y = 0*T, w = T,   h = T   },
+    { name = "guild_hall",  x =10*T, y = 0*T, w = 3*T, h = 3*T },
     { name = "adventurer_1", x = 4*T, y = 0*T, w = T, h = T },
     { name = "adventurer_2", x = 0*T, y = 2*T, w = T, h = T },
     { name = "adventurer_3", x = 1*T, y = 2*T, w = T, h = T },

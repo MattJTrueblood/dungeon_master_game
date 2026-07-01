@@ -2,35 +2,50 @@ local tiny      = require("tiny")
 local nav_graph = require("src/navigation/nav_graph")
 
 local system = tiny.processingSystem()
-system.filter = tiny.requireAll("nav", "ai")
-system.blocks = nil  -- set from main.lua after world creation
+system.filter          = tiny.requireAll("nav", "ai")
+system.blocks          = nil  -- set from main.lua
+system.blocks_by_floor = nil  -- set from main.lua
+system.blocks_by_tier  = nil  -- set from main.lua: {[1]=floor1 only, [2]=floors1-2, [3]=floors3+}
 
 function system:process(entity, dt)
     local ai  = entity.ai
     local nav = entity.nav
 
     if ai.state ~= "idle" then return end
+    if entity.retreating then return end
 
     ai.idle_timer = ai.idle_timer - dt
     if ai.idle_timer > 0 then return end
 
     if nav.confined_to_block then
-        local block = nav.current_block
-        local h     = #block.tiles
-        local w     = #block.tiles[1]
+        local block   = nav.current_block
+        local h       = #block.tiles
+        local w       = #block.tiles[1]
         local row     = entity.is_boss and (h - 2) or (h - 1)
         local max_col = entity.is_boss and (w - 2) or (w - 1)
-        nav.waypoint = nav_graph.tile_world_pos(block, row, math.random(2, max_col))
-        ai.state     = "wander"
+        nav.waypoint  = nav_graph.tile_world_pos(block, row, math.random(2, max_col))
+        ai.state      = "wander"
         return
     end
 
-    local floor      = nav.floor
-    local candidates = floor and self.blocks_by_floor[floor] or self.blocks
+    local candidates
+    if entity.tier and self.blocks_by_tier then
+        candidates = self.blocks_by_tier[entity.tier]
+    elseif nav.floor then
+        candidates = self.blocks_by_floor[nav.floor]
+    else
+        candidates = self.blocks
+    end
     if not candidates or #candidates == 0 then return end
 
+    local unexplored = {}
+    for _, b in ipairs(candidates) do
+        if not b.revealed then unexplored[#unexplored + 1] = b end
+    end
+    local pool = #unexplored > 0 and unexplored or candidates
+
     for _ = 1, 10 do
-        local dest = candidates[math.random(#candidates)]
+        local dest = pool[math.random(#pool)]
         if dest ~= nav.current_block then
             local route = nav_graph.find_route(nav.current_block, dest)
             if route == nil then

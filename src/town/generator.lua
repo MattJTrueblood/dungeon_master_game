@@ -82,7 +82,13 @@ function town_gen.generate(dungeon_entrance)
         end
     end
 
-    return town_block, house_entities
+    local guild_hall_col = TOWN_W - 5  -- near right edge, 3 tiles wide
+    local guild_hall = {
+        position = { x = (guild_hall_col - 1) * TILE_SIZE, y = town_y + (TOWN_H - 4) * TILE_SIZE },
+        sprite   = "guild_hall",
+    }
+
+    return town_block, house_entities, guild_hall
 end
 
 town_gen.town_y = -(TOWN_H * TILE_SIZE)

@@ -23,6 +23,7 @@ local FLOOR_TINTS = {
     { 0.75, 0.85, 1.0  },
     { 0.85, 0.7,  1.0  },
     { 1.0,  0.65, 0.65 },
+    { 0.6,  0.4,  0.9  },
 }
 
 local function draw_sprite(sprite, x, y)
@@ -32,7 +33,7 @@ end
 local function draw_block(block)
     if not REVEAL_ALL and not block.revealed then return end
     local tint    = FLOOR_TINTS[block.floor] or FLOOR_TINTS[1]
-    local overlay = { ladder = true, spawner = true, boss_spawner = true }
+    local overlay = { ladder = true, spawner = true, boss_spawner = true, chest = true }
 
     love.graphics.setColor(tint[1], tint[2], tint[3], 1)
     for row = 1, #block.tiles do
