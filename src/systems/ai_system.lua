@@ -14,11 +14,12 @@ function system:process(entity, dt)
     ai.idle_timer = ai.idle_timer - dt
     if ai.idle_timer > 0 then return end
 
-    local blocks = self.blocks
-    if not blocks or #blocks == 0 then return end
+    local floor      = nav.floor
+    local candidates = floor and self.blocks_by_floor[floor] or self.blocks
+    if not candidates or #candidates == 0 then return end
 
     for _ = 1, 10 do
-        local dest = blocks[math.random(#blocks)]
+        local dest = candidates[math.random(#candidates)]
         if dest ~= nav.current_block then
             local route = nav_graph.find_route(nav.current_block, dest)
             if route == nil then

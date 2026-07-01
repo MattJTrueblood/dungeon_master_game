@@ -23,6 +23,7 @@ function adventurer.new(block, col)
             state      = "idle",
             idle_timer = 0,
         },
+        reveals_fog = true,
     }
 end
 

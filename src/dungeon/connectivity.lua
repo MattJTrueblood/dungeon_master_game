@@ -140,6 +140,24 @@ local function punch_vertical(above, below)
     }
 end
 
+function connectivity.connect_layers(above_blocks, below_blocks, count)
+    local pairs = {}
+    for _, a in ipairs(above_blocks) do
+        for _, b in ipairs(below_blocks) do
+            if is_vertical_neighbor(a, b) then
+                pairs[#pairs + 1] = { a = a, b = b }
+            end
+        end
+    end
+    for i = #pairs, 2, -1 do
+        local j = math.random(i)
+        pairs[i], pairs[j] = pairs[j], pairs[i]
+    end
+    for i = 1, math.min(count, #pairs) do
+        punch_vertical(pairs[i].a, pairs[i].b)
+    end
+end
+
 function connectivity.connect(blocks)
     for _, block in ipairs(blocks) do
         block.connections = {}

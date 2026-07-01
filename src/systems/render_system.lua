@@ -5,6 +5,7 @@ local constants = require("src/constants")
 
 local TILE_SIZE    = constants.TILE_SIZE
 local DEBUG_ROUTES = constants.DEBUG_ROUTES
+local REVEAL_ALL   = constants.REVEAL_ALL
 local nav_graph    = DEBUG_ROUTES and require("src/navigation/nav_graph") or nil
 
 local block_render_system = tiny.system()
@@ -17,21 +18,47 @@ local world_canvas = nil
 local canvas_ox    = 0
 local canvas_oy    = 0
 
+local FLOOR_TINTS = {
+    { 1.0,  1.0,  1.0  },
+    { 0.75, 0.85, 1.0  },
+    { 0.85, 0.7,  1.0  },
+    { 1.0,  0.65, 0.65 },
+}
+
 local function draw_sprite(sprite, x, y)
-    love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(sprite.image, sprite.quad, x, y)
 end
 
 local function draw_block(block)
-    if not block.revealed then return end
+    if not REVEAL_ALL and not block.revealed then return end
+    local tint    = FLOOR_TINTS[block.floor] or FLOOR_TINTS[1]
+    local overlay = { ladder = true, spawner = true }
+
+    love.graphics.setColor(tint[1], tint[2], tint[3], 1)
     for row = 1, #block.tiles do
         for col = 1, #block.tiles[row] do
             local tile_type = block.tiles[row][col]
-            local sprite    = sprites.get(tile_type)
+            local bg        = overlay[tile_type] and "open" or tile_type
+            local sprite    = sprites.get(bg)
             if sprite then
                 local x = block.position.x + (col - 1) * TILE_SIZE
                 local y = block.position.y + (row - 1) * TILE_SIZE
                 draw_sprite(sprite, x, y)
+            end
+        end
+    end
+
+    love.graphics.setColor(1, 1, 1, 1)
+    for row = 1, #block.tiles do
+        for col = 1, #block.tiles[row] do
+            local tile_type = block.tiles[row][col]
+            if overlay[tile_type] then
+                local sprite = sprites.get(tile_type)
+                if sprite then
+                    local x = block.position.x + (col - 1) * TILE_SIZE
+                    local y = block.position.y + (row - 1) * TILE_SIZE
+                    draw_sprite(sprite, x, y)
+                end
             end
         end
     end
@@ -85,6 +112,10 @@ local function draw_route(entity)
 end
 
 local function draw_entity(entity)
+    if not REVEAL_ALL and entity.nav and entity.nav.current_block and not entity.nav.current_block.revealed then
+        return
+    end
+    love.graphics.setColor(1, 1, 1, 1)
     local sprite = sprites.get(entity.sprite)
     if sprite then
         draw_sprite(sprite, entity.position.x, entity.position.y)

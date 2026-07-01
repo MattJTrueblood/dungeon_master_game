@@ -31,6 +31,18 @@ local function view_bounds(cam)
         cam.bounds.y2 - vh + BUFFER
 end
 
+local function min_zoom(bounds)
+    local sw = love.graphics.getWidth()
+    return sw / (bounds.x2 - bounds.x1 + 6 * TILE_SIZE)
+end
+
+function camera:set_bounds(bounds)
+    self.bounds      = bounds
+    local mz         = min_zoom(bounds)
+    self.zoom        = mz
+    self.target_zoom = mz
+end
+
 function camera:clamp()
     local lo_x, lo_y, hi_x, hi_y = view_bounds(self)
     self.x = math.max(lo_x, math.min(self.x, hi_x))
@@ -76,9 +88,7 @@ function camera:move_drag(dx, dy)
 end
 
 function camera:scroll(ticks, mx, my)
-    local sw      = love.graphics.getDimensions()
-    local min_zoom = sw / (self.bounds.x2 - self.bounds.x1 + 6 * TILE_SIZE)
-    self.target_zoom  = math.max(min_zoom, math.min(MAX_ZOOM, self.target_zoom * (1.1 ^ ticks)))
+    self.target_zoom  = math.max(min_zoom(self.bounds), math.min(MAX_ZOOM, self.target_zoom * (1.1 ^ ticks)))
     self.zoom_pivot.x = mx
     self.zoom_pivot.y = my
 end

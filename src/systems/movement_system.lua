@@ -48,6 +48,7 @@ function system:process(entity, dt)
             nav.current_block = conn.to_block
             nav.waypoint      = to_pos
             nav.crossing      = conn
+            if entity.reveals_fog then conn.to_block.revealed = true end
 
         else
             go_idle(entity)
