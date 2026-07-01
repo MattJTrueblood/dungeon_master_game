@@ -60,6 +60,7 @@ function camera:start_drag()
 end
 
 function camera:end_drag()
+    if not self.dragging then return end
     self.dragging = false
     self.vel_x    = self.drag_vel_x
     self.vel_y    = self.drag_vel_y

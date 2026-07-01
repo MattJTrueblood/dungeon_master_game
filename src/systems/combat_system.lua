@@ -2,7 +2,7 @@ local tiny      = require("tiny")
 local constants = require("src/constants")
 local TILE_SIZE = constants.TILE_SIZE
 
-local COLLISION_DIST   = TILE_SIZE * 0.75
+local COLLISION_DIST   = 4  -- px gap between bounding boxes
 local ATTACK_INTERVAL  = 1.2
 local BUMP_DIST        = TILE_SIZE * 0.35
 local BUMP_DURATION    = 0.25
@@ -37,6 +37,18 @@ local function find_combat_positions(block, mid_x)
     return nil, nil
 end
 
+local function entity_size(e)
+    return e.is_boss and 2 * TILE_SIZE or TILE_SIZE
+end
+
+local function box_dist(a, b)
+    local aw = entity_size(a)
+    local bw = entity_size(b)
+    local dx = math.max(0, math.max(a.position.x, b.position.x) - math.min(a.position.x + aw, b.position.x + bw))
+    local dy = math.max(0, math.max(a.position.y, b.position.y) - math.min(a.position.y + aw, b.position.y + bw))
+    return math.sqrt(dx * dx + dy * dy)
+end
+
 local function entity_on_ladder(e)
     return e.nav and e.nav.crossing and e.nav.crossing.kind == "vertical"
 end
@@ -47,25 +59,59 @@ local function clear_nav(e)
     e.nav.crossing = nil
 end
 
+-- for a boss fight: place the non-boss adjacent to the boss's bounding box
+local function find_boss_adjacent(boss, other)
+    local block   = boss.nav.current_block
+    local h       = #block.tiles
+    local w       = #block.tiles[1]
+    local floor_y = block.position.y + (h - 2) * TILE_SIZE
+    local stand_row = h - 1
+
+    -- which side is the non-boss on?
+    local boss_left  = boss.position.x
+    local boss_right = boss.position.x + 2 * TILE_SIZE
+
+    local sides = other.position.x < boss_left
+        and { boss_left - TILE_SIZE, boss_right }
+        or  { boss_right,            boss_left - TILE_SIZE }
+
+    for _, adj_x in ipairs(sides) do
+        local col = math.floor((adj_x - block.position.x) / TILE_SIZE) + 1
+        if col >= 2 and col <= w - 1 then
+            local t = block.tiles[stand_row][col]
+            if t ~= "wall" and t ~= "ladder" then
+                return { x = adj_x, y = floor_y }
+            end
+        end
+    end
+    return nil
+end
+
 local function initiate_combat(a, b)
     local mid_x = (a.position.x + b.position.x) / 2
+    local pa, pb
 
-    -- prefer the block of whichever entity is not crossing; try both
-    local block = a.nav.current_block
-    local pa, pb = find_combat_positions(block, mid_x)
-    if not pa then
-        block = b.nav.current_block
+    if a.is_boss or b.is_boss then
+        local boss  = a.is_boss and a or b
+        local other = a.is_boss and b or a
+        local adj   = find_boss_adjacent(boss, other)
+        if not adj then return end
+        pa = a.is_boss and { x = a.position.x, y = a.position.y } or adj
+        pb = b.is_boss and { x = b.position.x, y = b.position.y } or adj
+    else
+        local block = a.nav.current_block
         pa, pb = find_combat_positions(block, mid_x)
-    end
-    if not pa then return end  -- no valid room positions found
-
-    -- swap so the entity on the left goes to the left tile
-    if a.position.x > b.position.x then
-        pa, pb = pb, pa
+        if not pa then
+            pa, pb = find_combat_positions(b.nav.current_block, mid_x)
+        end
+        if not pa then return end
+        if a.position.x > b.position.x then pa, pb = pb, pa end
     end
 
     -- bump_dir: toward opponent. left entity bumps right (+1), right entity bumps left (-1)
-    local a_dir = pa.x < pb.x and 1 or -1
+    local a_center = a.position.x + (a.is_boss and TILE_SIZE or TILE_SIZE / 2)
+    local b_center = b.position.x + (b.is_boss and TILE_SIZE or TILE_SIZE / 2)
+    local a_dir = a_center < b_center and 1 or -1
     local b_dir = -a_dir
 
     clear_nav(a)
@@ -75,7 +121,7 @@ local function initiate_combat(a, b)
     a.combat = {
         target       = b,
         target_pos   = pa,
-        arrived      = false,
+        arrived      = a.is_boss or false,
         attack_timer = ATTACK_INTERVAL,
         bump_timer   = 0,
         bump_dir     = a_dir,
@@ -84,7 +130,7 @@ local function initiate_combat(a, b)
     b.combat = {
         target       = a,
         target_pos   = pb,
-        arrived      = false,
+        arrived      = b.is_boss or false,
         attack_timer = ATTACK_INTERVAL + ATTACK_INTERVAL / 2,
         bump_timer   = 0,
         bump_dir     = b_dir,
@@ -128,10 +174,7 @@ function system:update(dt)
                 local b_state = b.ai.state
                 if b_state == "idle" or b_state == "wander" then
                     if a.faction ~= b.faction then
-                        local dx   = a.position.x - b.position.x
-                        local dy   = a.position.y - b.position.y
-                        local dist = math.sqrt(dx * dx + dy * dy)
-                        if dist < COLLISION_DIST then
+                        if box_dist(a, b) < COLLISION_DIST then
                             if not entity_on_ladder(a) and not entity_on_ladder(b) then
                                 initiate_combat(a, b)
                             end
@@ -167,8 +210,10 @@ function system:update(dt)
                     c.arrived = true
                     -- transition to combat when both arrive
                     if target.combat and target.combat.arrived and not to_remove[target] then
-                        e.ai.state     = "combat"
-                        target.ai.state = "combat"
+                        e.ai.state          = "combat"
+                        target.ai.state     = "combat"
+                        c.attack_timer              = 0.2
+                        target.combat.attack_timer  = 0.2 + ATTACK_INTERVAL / 2
                     end
                 end
 
@@ -180,13 +225,10 @@ function system:update(dt)
                     target.health.current = target.health.current - e.attack_power
                     -- trigger bump on this attacker
                     c.bump_timer = BUMP_DURATION
-                    -- check target death
+                    -- check target death: let the bump finish before cleaning up
                     if target.health.current <= 0 then
                         to_remove[target] = true
-                        e.combat        = nil
-                        e.combat_bump   = nil
-                        e.ai.state      = "idle"
-                        e.ai.idle_timer = 0
+                        c.kill_pending = true
                     end
                 end
 
@@ -197,6 +239,12 @@ function system:update(dt)
                     e.combat_bump = math.sin(t * math.pi) * BUMP_DIST * c.bump_dir
                 else
                     e.combat_bump = 0
+                    if c.kill_pending then
+                        e.combat        = nil
+                        e.combat_bump   = nil
+                        e.ai.state      = "idle"
+                        e.ai.idle_timer = 0
+                    end
                 end
             end
         end

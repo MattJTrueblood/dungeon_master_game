@@ -15,9 +15,11 @@ local generator       = require("src/dungeon/generator")
 local connectivity    = require("src/dungeon/connectivity")
 local town_gen        = require("src/town/generator")
 local adventurer      = require("src/entities/adventurer")
+local hud             = require("src/ui/hud")
 
 local world
 local spawn_town_block
+local guild_gold = 1000
 
 function love.load()
     print("loading...")
@@ -70,11 +72,6 @@ function love.load()
     ai_system.system.blocks          = all_blocks
     ai_system.system.blocks_by_floor = blocks_by_floor
 
-    local town_w = #town_block.tiles[1]
-    for _ = 1, 3 do
-        world:addEntity(adventurer.new(town_block, math.random(2, town_w - 1)))
-    end
-
     spawn_town_block = town_block
 
     camera:set_bounds({
@@ -92,16 +89,20 @@ function love.load()
     print("loading complete!")
 end
 
-function love.keypressed(key)
-    if key == "a" then
-        local b  = spawn_town_block
-        local tw = #b.tiles[1]
-        world:addEntity(adventurer.new(b, math.random(2, tw - 1)))
-    end
-end
-
 function love.mousepressed(x, y, button)
-    if button == 1 then camera:start_drag() end
+    if button == 1 then
+        local tier, cost = hud.check_click(x, y)
+        if tier then
+            if guild_gold >= cost then
+                guild_gold = guild_gold - cost
+                local b  = spawn_town_block
+                local tw = #b.tiles[1]
+                world:addEntity(adventurer.new(b, math.random(2, tw - 1), tier))
+            end
+            return
+        end
+        camera:start_drag()
+    end
 end
 
 function love.mousereleased(x, y, button)
@@ -126,6 +127,7 @@ end
 
 function love.draw()
     render_system.draw()
+    hud.draw(guild_gold)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.print("v" .. version.major .. "." .. version.minor .. "." .. version.patch, 10, 10)
+    love.graphics.print("v" .. version.major .. "." .. version.minor .. "." .. version.patch, 10, love.graphics.getHeight() - 20)
 end
