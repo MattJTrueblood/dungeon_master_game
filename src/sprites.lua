@@ -18,6 +18,7 @@ local sprite_defs = {
     { name = "house1",         x = 2*T, y = 1*T, w = 2*T, h = 2*T },
     { name = "house2",         x = 4*T, y = 1*T, w = 2*T, h = 2*T },
     { name = "monster_boss",   x = 6*T, y = 1*T, w = 2*T, h = 2*T },
+    { name = "boss_spawner",   x = 8*T, y = 1*T, w = 2*T, h = 2*T },
 }
 
 function sprites.load()

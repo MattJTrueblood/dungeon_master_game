@@ -32,7 +32,7 @@ end
 local function draw_block(block)
     if not REVEAL_ALL and not block.revealed then return end
     local tint    = FLOOR_TINTS[block.floor] or FLOOR_TINTS[1]
-    local overlay = { ladder = true, spawner = true }
+    local overlay = { ladder = true, spawner = true, boss_spawner = true }
 
     love.graphics.setColor(tint[1], tint[2], tint[3], 1)
     for row = 1, #block.tiles do
@@ -112,9 +112,6 @@ local function draw_route(entity)
 end
 
 local function draw_entity(entity)
-    if not REVEAL_ALL and entity.nav and entity.nav.current_block and not entity.nav.current_block.revealed then
-        return
-    end
     love.graphics.setColor(1, 1, 1, 1)
     local sprite = sprites.get(entity.sprite)
     if sprite then
@@ -157,6 +154,16 @@ function render_system.draw()
     for _, entity in ipairs(entity_render_system.entities) do
         draw_entity(entity)
         if DEBUG_ROUTES then draw_route(entity) end
+    end
+    if not REVEAL_ALL then
+        love.graphics.setColor(0, 0, 0, 1)
+        for _, block in ipairs(block_render_system.entities) do
+            if not block.revealed then
+                local w = #block.tiles[1] * TILE_SIZE
+                local h = #block.tiles    * TILE_SIZE
+                love.graphics.rectangle("fill", block.position.x, block.position.y, w, h)
+            end
+        end
     end
     love.graphics.pop()
     love.graphics.setCanvas()

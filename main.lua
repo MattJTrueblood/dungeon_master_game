@@ -28,7 +28,8 @@ function love.load()
         movement_system.system,
         ai_system.system,
         spawner_system.monster_system,
-        spawner_system.spawner_system
+        spawner_system.spawner_system,
+        spawner_system.boss_spawner_system
     )
 
     math.randomseed(os.time())
@@ -44,6 +45,12 @@ function love.load()
     for i = 1, NUM_FLOORS - 1 do
         connectivity.connect_layers(floors[i].blocks, floors[i + 1].blocks, math.random(1, 3))
     end
+
+    local floor_data = {}
+    for i = 1, NUM_FLOORS do
+        floor_data[i] = { blocks = floors[i].blocks, floor = i }
+    end
+    generator.place_spawners(floor_data)
 
     local town_block, house_entities = town_gen.generate(floors[1].entrance)
 

@@ -111,37 +111,73 @@ function generator.generate_layer(world_x, world_y, floor)
         end
     end
 
-    -- mark outermost blocks as spawners
-    local layer_x2 = world_x + LAYER_W * TILE_SIZE
-    local layer_y2 = world_y + LAYER_H * TILE_SIZE
-    local outermost = {}
-    for _, block in ipairs(blocks) do
-        local bx2 = block.position.x + #block.tiles[1] * TILE_SIZE
-        local by2 = block.position.y + #block.tiles   * TILE_SIZE
-        if block.position.x == world_x or bx2 == layer_x2 then
-            outermost[#outermost + 1] = block
-        end
-    end
-    for i = #outermost, 2, -1 do
-        local j = math.random(i)
-        outermost[i], outermost[j] = outermost[j], outermost[i]
-    end
-    local placed = 0
-    for i = 1, #outermost do
-        if placed >= 3 then break end
-        local b   = outermost[i]
-        local h   = #b.tiles
-        local w   = #b.tiles[1]
-        local col = (b.position.x == world_x) and 2 or (w - 1)
-        if b.tiles[h - 1][col] ~= "ladder" then
-            b.tiles[h - 1][col] = "spawner"
-            b.has_spawner        = true
-            placed               = placed + 1
-        end
-        b.has_spawner   = true
-    end
-
     return blocks, entrance
+end
+
+function generator.place_spawners(floors)
+    for _, floor_data in ipairs(floors) do
+        local blocks  = floor_data.blocks
+        local floor   = floor_data.floor
+
+        local layer_x1, layer_x2 = math.huge, -math.huge
+        for _, b in ipairs(blocks) do
+            local bx1 = b.position.x
+            local bx2 = b.position.x + #b.tiles[1] * TILE_SIZE
+            if bx1 < layer_x1 then layer_x1 = bx1 end
+            if bx2 > layer_x2 then layer_x2 = bx2 end
+        end
+        local outermost = {}
+        for _, block in ipairs(blocks) do
+            local bx2 = block.position.x + #block.tiles[1] * TILE_SIZE
+            if block.position.x == layer_x1 or bx2 == layer_x2 then
+                outermost[#outermost + 1] = block
+            end
+        end
+        for i = #outermost, 2, -1 do
+            local j = math.random(i)
+            outermost[i], outermost[j] = outermost[j], outermost[i]
+        end
+        local placed = 0
+        for i = 1, #outermost do
+            if placed >= 3 then break end
+            local b   = outermost[i]
+            local h   = #b.tiles
+            local w   = #b.tiles[1]
+            local col = (b.position.x == layer_x1) and 2 or (w - 1)
+            if b.tiles[h - 1][col] ~= "ladder" then
+                b.tiles[h - 1][col] = "spawner"
+                b.has_spawner        = true
+                placed               = placed + 1
+            end
+        end
+
+        if floor == 4 then
+            local big = {}
+            for _, b in ipairs(blocks) do
+                if #b.tiles[1] >= 3 * UNIT then big[#big + 1] = b end
+            end
+            if #big > 0 then
+                local b  = big[math.random(#big)]
+                local h  = #b.tiles
+                local w  = #b.tiles[1]
+                local r  = h - 2
+                local candidates = {}
+                for c = 3, w - 3 do
+                    if b.tiles[r][c]       ~= "ladder"
+                    and b.tiles[r][c+1]    ~= "ladder"
+                    and b.tiles[r+1][c]    ~= "ladder"
+                    and b.tiles[r+1][c+1]  ~= "ladder" then
+                        candidates[#candidates + 1] = c
+                    end
+                end
+                if #candidates > 0 then
+                    local c = candidates[math.random(#candidates)]
+                    b.tiles[r][c]      = "boss_spawner"
+                    b.has_boss_spawner = true
+                end
+            end
+        end
+    end
 end
 
 generator.layer_w_px = LAYER_W * TILE_SIZE

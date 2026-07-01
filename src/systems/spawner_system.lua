@@ -1,8 +1,8 @@
 local tiny    = require("tiny")
 local monster = require("src/entities/monster")
 
-local SPAWN_INTERVAL = { 10, 8, 6, 5 }
-local MAX_POP        = { 3, 4, 5, 5 }
+local SPAWN_INTERVAL = { 10, 10, 10, 10 }
+local MAX_POP        = { 20, 20, 20, 20 }
 local DIFFICULTIES   = {
     { "easy" },
     { "easy", "medium" },
@@ -43,7 +43,35 @@ function spawner_system:update(dt)
     end
 end
 
+local BOSS_SPAWN_INTERVAL = 30
+
+local boss_spawner_system = tiny.system()
+boss_spawner_system.filter = tiny.requireAll("has_boss_spawner", "floor")
+
+function boss_spawner_system:onAdd(block)
+    block.boss_spawn_timer = BOSS_SPAWN_INTERVAL
+end
+
+function boss_spawner_system:update(dt)
+    local boss_count = 0
+    for _, e in ipairs(monster_system.entities) do
+        if e.is_boss then boss_count = boss_count + 1 end
+    end
+
+    for _, block in ipairs(self.entities) do
+        if boss_count == 0 then
+            block.boss_spawn_timer = block.boss_spawn_timer - dt
+            if block.boss_spawn_timer <= 0 then
+                self.world:addEntity(monster.new(block, "boss"))
+                boss_count             = boss_count + 1
+                block.boss_spawn_timer = BOSS_SPAWN_INTERVAL
+            end
+        end
+    end
+end
+
 return {
-    monster_system = monster_system,
-    spawner_system = spawner_system,
+    monster_system     = monster_system,
+    spawner_system     = spawner_system,
+    boss_spawner_system = boss_spawner_system,
 }

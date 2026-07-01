@@ -6,6 +6,7 @@ local STATS = {
     easy   = { sprite = "monster_easy",   health = 40,  speed = 175 },
     medium = { sprite = "monster_medium", health = 80,  speed = 200 },
     hard   = { sprite = "monster_hard",   health = 150, speed = 225 },
+    boss   = { sprite = "monster_boss",   health = 500, speed = 80  },
 }
 
 function monster.new(block, difficulty)
@@ -16,14 +17,16 @@ function monster.new(block, difficulty)
     return {
         position = {
             x = block.position.x + (col - 1) * TILE_SIZE,
-            y = block.position.y + (h - 2)   * TILE_SIZE,
+            y = block.position.y + ((difficulty == "boss") and (h - 3) or (h - 2)) * TILE_SIZE,
         },
         sprite     = stat.sprite,
         health     = { current = stat.health, max = stat.health },
         is_monster = true,
+        is_boss    = difficulty == "boss" or nil,
         nav = {
             current_block = block,
-            floor         = block.floor,
+            floor              = block.floor,
+            confined_to_block  = difficulty == "boss" or nil,
             route         = {},
             waypoint      = nil,
             speed         = stat.speed,

@@ -14,6 +14,17 @@ function system:process(entity, dt)
     ai.idle_timer = ai.idle_timer - dt
     if ai.idle_timer > 0 then return end
 
+    if nav.confined_to_block then
+        local block = nav.current_block
+        local h     = #block.tiles
+        local w     = #block.tiles[1]
+        local row     = entity.is_boss and (h - 2) or (h - 1)
+        local max_col = entity.is_boss and (w - 2) or (w - 1)
+        nav.waypoint = nav_graph.tile_world_pos(block, row, math.random(2, max_col))
+        ai.state     = "wander"
+        return
+    end
+
     local floor      = nav.floor
     local candidates = floor and self.blocks_by_floor[floor] or self.blocks
     if not candidates or #candidates == 0 then return end
